@@ -6,7 +6,7 @@ Small market simulator that executes market orders using historic market data,
 in order to calculate statistics on the performance of the selected strategy.
 
 
-Uses [QSTK Library](www.wiki.quantsoftware.org)
+The software utilizes [QSTK Library](www.wiki.quantsoftware.org).
 
 QSTK Copyright:
 - The QuantSoftware ToolKit (QSTK) is released under the New BSD License as follows:
