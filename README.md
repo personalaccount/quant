@@ -1,10 +1,10 @@
 ##Market Simulator
 
 Uses [QSTK Library](www.wiki.quantsoftware.org)
-QSTK Copyright:
 
-The QuantSoftware ToolKit (QSTK) is released under the New BSD License as follows:
-Copyright (c) 2011, 2012, Georgia Tech Research Corporation (GTRC) All rights reserved.
+QSTK Copyright:
+    The QuantSoftware ToolKit (QSTK) is released under the New BSD License as follows:
+    Copyright (c) 2011, 2012, Georgia Tech Research Corporation (GTRC) All rights reserved.
 
 QSTK Dependencies
 - numpy >= 1.6.1,
@@ -15,7 +15,7 @@ QSTK Dependencies
 - cvxopt >= 1.1.3,
 - scikit-learn >= 0.11
 
-Authors
+QSTK Authors
 - [Tucker Balch](http://www.cc.gatech.edu/~tucker/)
 - [Sourabh Bajaj](http://sb2nov.github.io)
 - [John Cornwell](https://github.com/JWCornV)
