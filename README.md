@@ -1,10 +1,16 @@
 ##Market Simulator
 
+ - market-simulator.py
+
+Small market simulator that executes market orders using historic market data, 
+in order to calculate statistics on the performance of the selected strategy.
+
+
 Uses [QSTK Library](www.wiki.quantsoftware.org)
 
 QSTK Copyright:
-    The QuantSoftware ToolKit (QSTK) is released under the New BSD License as follows:
-    Copyright (c) 2011, 2012, Georgia Tech Research Corporation (GTRC) All rights reserved.
+- The QuantSoftware ToolKit (QSTK) is released under the New BSD License as follows:
+  Copyright (c) 2011, 2012, Georgia Tech Research Corporation (GTRC) All rights reserved.
 
 QSTK Dependencies
 - numpy >= 1.6.1,
