@@ -13,9 +13,6 @@ orders_csv_filename = "orders-short.csv"
 #orders_csv_filename = "orders2.csv"
 cash_amount = 1000000
 
-
-
-
 # Create a numpy array of orders
 na_orders_list = np.loadtxt(orders_csv_filename, dtype={'names':('year', 'month', 'day', 'symbol', 'order_type', 'num_shares'), 
     'formats':('i4','i2','i2','S4','S4','i4')}, delimiter=',',skiprows=0)
@@ -71,12 +68,6 @@ c_dataobj = da.DataAccess('Yahoo', cachestalltime=0)
 
 # Create a list of dataframe objects which have all the different types of data
 ldf_data = c_dataobj.get_data(ldt_timestamps, lSymbols, 'close')
-
-# Convert the list into a dictionary to allow easy access to any type of data
-#d_data = dict(zip(lSymbols, ldf_data))
-
-# df_rets now contains close values for each symbol, timestamp data, symbol names
-#df_rets = d_data['close'].copy()
 
 # Add an extra column "CASH" to the portfolio dataframe. Defaults to the total amount of cash available in the beginning
 df_Portfolio["CASH"] = df_Portfolio[lSymbols[0]].map(lambda x:cash_amount)
@@ -147,12 +138,7 @@ port_dreturns = tsu.returnize0(normalized_portfolio_rets)
 
 # Standard Deviation of Fund
 fDev = np.std(port_dreturns)
-
 fMean = np.mean(port_dreturns)
-
-# Risk free returns, default is 0% 
-#fFreeReturn = 0
-
 fSharpe = (fMean*252)/(fDev*np.sqrt(252))
 
 print "Sharpe Ratio of Fund :",fSharpe
