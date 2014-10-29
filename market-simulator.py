@@ -7,41 +7,43 @@ import datetime as dt
 import QSTK.qstkutil.DataAccess as da
 import QSTK.qstkutil.tsutil as tsu
 import QSTK.qstkstudy.EventProfiler as ep
+import csv
 
 # Read-in the orders
-orders_csv_filename = "orders-short.csv"
+#orders_csv_filename = "orders-short.csv"
 #orders_csv_filename = "orders2.csv"
-cash_amount = 1000000
+orders_csv_filename = "events.csv"
+cash_amount = 50000
 
-# Create a numpy array of orders
-na_orders_list = np.loadtxt(orders_csv_filename, dtype={'names':('year', 'month', 'day', 'symbol', 'order_type', 'num_shares'), 
-    'formats':('i4','i2','i2','S4','S4','i4')}, delimiter=',',skiprows=0)
-
-num_of_orders = len(na_orders_list)
-last_row = num_of_orders-1
-
-# A list of symbols
+# List of symbols in our portfolio
 lSymbols = []
 
-# A list of dates when orders are occured
-lDates = []
+# List of orders
+lOrderDetails = []
 
-for i in range (num_of_orders):
-    # Fill-in the list of Dates
-    order_date = dt.datetime(na_orders_list[i]['year'],na_orders_list[i]['month'],na_orders_list[i]['day']) + dt.timedelta(hours=16)
-    # Since there may be multiple orders on the same date it is important to check for duplicates
-    if (order_date not in lDates):
-        lDates.append(order_date)
+with open(orders_csv_filename, 'rb') as csvfile:
+    orders_reader = csv.reader(csvfile, delimiter=',')
+    for row in orders_reader:
 
-    # Fill-in the list of Symbols
-    if (na_orders_list[i]['symbol'] not in lSymbols):
-        lSymbols.append(na_orders_list[i]['symbol'])
+        # Fill-in the list of Symbols
+        symbol = row[3]
+        if (symbol not in lSymbols):
+            lSymbols.append(symbol)
 
-# Set the start date
-startDate = dt.datetime(na_orders_list[0]['year'], na_orders_list[0]['month'], na_orders_list[0]['day'])
+        order_date = dt.datetime(int(row[0]),int(row[1]),int(row[2])) + dt.timedelta(hours=16)
+        lOrderDetails.append([order_date,symbol,row[4],row[5]])
 
-# End date should be offset-ed by 1 day in order to read the adjusted_close for the last date. 
-endDate = dt.datetime(na_orders_list[last_row]['year'], na_orders_list[last_row]['month'], na_orders_list[last_row]['day'])+dt.timedelta(days=1)
+# Sort the array
+lOrderDetails = sorted (lOrderDetails, key=lambda orders: orders[0])
+
+num_of_orders = len(lOrderDetails)
+
+# Set the start and end date
+startDate = lOrderDetails[0][0]
+endDate = lOrderDetails[-1][0]
+
+#startDate = dt.datetime(2008, 1, 3)
+#endDate = dt.datetime(2009, 12, 28)
 
 # Specify 16:00 hours to read the data that was available at the close of the trading day
 dt_timeofday = dt.timedelta(hours=16)
@@ -68,6 +70,7 @@ c_dataobj = da.DataAccess('Yahoo', cachestalltime=0)
 
 # Create a list of dataframe objects which have all the different types of data
 ldf_data = c_dataobj.get_data(ldt_timestamps, lSymbols, 'close')
+spx_data = c_dataobj.get_data(ldt_timestamps, ["$SPX"], 'close')
 
 # Add an extra column "CASH" to the portfolio dataframe. Defaults to the total amount of cash available in the beginning
 df_Portfolio["CASH"] = df_Portfolio[lSymbols[0]].map(lambda x:cash_amount)
@@ -79,21 +82,21 @@ df_Portfolio["P_VALUE"] = df_Portfolio[lSymbols[0]].map(lambda x:cash_amount)
 # Iterate over the orders, check the prices and update the portfolio
 
 for j in range(0,num_of_orders):
-    order_date  = dt.datetime(na_orders_list[j]['year'],na_orders_list[j]['month'],na_orders_list[j]['day']) + dt.timedelta(hours=16)
-    symbol      = na_orders_list[j]['symbol']
-    num_shares  = na_orders_list[j]['num_shares']
-    order_type  = na_orders_list[j]['order_type']
+    order_date  = lOrderDetails[j][0]
+    symbol      = lOrderDetails[j][1]
+    order_type  = lOrderDetails[j][2]
+    num_shares  = int(lOrderDetails[j][3])
 
     # The .loc attribute is the primary access method to the cells in a pandas dataframe
     share_price = ldf_data.loc[order_date,symbol]
     order_value = num_shares*share_price
 
-    print "\r\nOrder date: %s" % order_date
-    print "Processing: ",order_type," ",num_shares," shares of ",symbol
-    print symbol," share market price is $%s" % share_price
-    print "Total order amount: $%s\r\n" % order_value
-
     current_num_shares = df_Portfolio.loc[order_date,symbol]
+
+    print "\r\nOrder date: %s" % order_date
+    print "Processing:",order_type,"",num_shares," shares of ",symbol
+    print symbol," share market price is: $%s" % share_price
+    print "Total order amount: $%s\r\n" % order_value
 
     if order_type == "Buy":
         cash_amount = cash_amount - order_value
@@ -106,9 +109,11 @@ for j in range(0,num_of_orders):
     df_Portfolio.loc[order_date:,symbol] = new_num_shares
     df_Portfolio.loc[order_date:,['CASH']] = cash_amount
 
+
+    # Default the current portfolio value to the current amount of cash
     cur_portfolio_value = cash_amount
 
-
+    # Calculate the remaining part of the portfolio value, by adding the price of all equities on that date
     for sym in lSymbols:
         cur_portfolio_value += df_Portfolio.loc[order_date,sym]*ldf_data.loc[order_date,sym]
         print "%4s value on %s is $%6s |%d shares" % (sym, order_date, ldf_data.loc[order_date, sym], df_Portfolio.loc[order_date,sym])
@@ -116,6 +121,7 @@ for j in range(0,num_of_orders):
     df_Portfolio.loc[order_date:,["P_VALUE"]] = cur_portfolio_value
 
 
+# Calculate the value of the portfolio on each trading day
 for market_date in ldt_timestamps:
     cur_portfolio_value = float(df_Portfolio.loc[market_date,['CASH']])
     for sym in lSymbols:
@@ -127,10 +133,10 @@ for market_date in ldt_timestamps:
 print "\r\n"
 print df_Portfolio
 
-print "\r\nDetails on performance of the portfolio:"
+print "\r\nDetails on performance of the portfolio:","\r\n"
 print "Data Range: ", startDate, "to", endDate,"\r\n"
 
-# Calculating the statistics
+# Calculating the statistics for our Fund
 portfolio_cummulative_rets = np.array(df_Portfolio.loc[:,"P_VALUE"])
 normalized_portfolio_rets = portfolio_cummulative_rets[:]/portfolio_cummulative_rets[0]
 
@@ -141,7 +147,24 @@ fDev = np.std(port_dreturns)
 fMean = np.mean(port_dreturns)
 fSharpe = (fMean*252)/(fDev*np.sqrt(252))
 
+# Calculating statistics for the Market Portfolio ($SPX)
+spx_cum_returns = np.array(spx_data[:])
+norm_spx_rets = spx_cum_returns[:]/spx_cum_returns[0]
+
+spx_drets = tsu.returnize0(norm_spx_rets)
+
+fspxDev = np.std(spx_drets)
+fspxMean = np.mean(spx_drets)
+fspxSharpe = (fspxMean*252)/(fspxDev*np.sqrt(252))
+
 print "Sharpe Ratio of Fund :",fSharpe
+print "Sharpe Ratio of $SPX :", fspxSharpe,"\r\n"
+
 print "Total Return of Fund :", portfolio_cummulative_rets[-1]/portfolio_cummulative_rets[0]
+print "Total Return of $SPX :", spx_cum_returns[-1]/spx_cum_returns[0],"\r\n"
+
 print "Standard Deviation of Fund :", fDev
+print "Standard Deviation of SPX :", fspxDev,"\r\n"
+
 print "Average Daily Return of Fund :", fMean
+print "Average Daily Return of $SPX :", fspxMean,"\r\n"
