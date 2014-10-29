@@ -42,9 +42,6 @@ num_of_orders = len(lOrderDetails)
 startDate = lOrderDetails[0][0]
 endDate = lOrderDetails[-1][0]
 
-#startDate = dt.datetime(2008, 1, 3)
-#endDate = dt.datetime(2009, 12, 28)
-
 # Specify 16:00 hours to read the data that was available at the close of the trading day
 dt_timeofday = dt.timedelta(hours=16)
 
