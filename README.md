@@ -1,9 +1,6 @@
-##Market Simulator
+# Market Simulator
 
- - market-simulator.py
-
-Small market simulator that executes market orders using historic market data, 
-in order to calculate statistics on the performance of the selected strategy.
+Small market simulator that executes market orders upon historic market data and estimates performance of the selected strategy.
 
 
 The software utilizes [QSTK Library](www.wiki.quantsoftware.org).
